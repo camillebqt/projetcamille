@@ -1,22 +1,20 @@
 #!/bin/bash
 
-set -e
+echo -e "\033[0;32mDeploying updates to GitHub...\033[0m"
 
-echo $GITHUB_AUTH_SECRET > ~/.git-credentials && chmod 0600 ~/.git-credentials
-git config --global credential.helper store
-git config --global user.email "camillebqt@users.noreply.github.com"
-git config --global user.name "camillebqt"
-git config --global push.default simple
+cd public
 
-rm -rf deployment
-git clone -b master https://github.com/<GITHUB HTTPS PATH TO YOUR PUBLISHING REPO> deployment
-rsync -av --delete --exclude ".git" public/ deployment
-cd deployment
-git add -A
-# we need the || true, as sometimes you do not have any content changes
-# and git woundn't commit and you don't want to break the CI because of that
-git commit -m "rebuilding site on `date`, commit ${TRAVIS_COMMIT} and job ${TRAVIS_JOB_NUMBER}" || true
-git push
+if [ -n "$GITHUB_AUTH_SECRET" ]
+then
+    touch ~/.git-credentials
+    chmod 0600 ~/.git-credentials
+    echo $GITHUB_AUTH_SECRET > ~/.git-credentials
 
-cd ..
-rm -rf deployment
+    git config credential.helper store
+    git config user.email "camillebqt@users.noreply.github.com"
+    git config user.name "camillebqt"
+fi
+
+git add .
+git commit -m "Rebuild site"
+git push --force origin HEAD:master
